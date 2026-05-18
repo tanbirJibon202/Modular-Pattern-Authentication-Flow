@@ -1,25 +1,29 @@
 import { pool } from "../../db";
 import bcrypt from "bcrypt";
 const createUserIntoDB = async (payLoad) => {
-    const { name, email, age, password } = payLoad;
+    const { name, email, age, role, password } = payLoad;
     const hashPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(`
-    INSERT INTO users(name, email, age, password) VALUES($1, $2, $3, $4) RETURNING * 
-    `, [name, email, age, hashPassword]);
+  INSERT INTO users(name, email, age, role, password)
+  VALUES($1, $2, $3, COALESCE($4, 'user'), $5)
+  RETURNING id, name, email, age, role, is_active, created_at
+  `, [name, email, age, role, hashPassword]);
     delete result.rows[0].password;
     return result;
 };
 const getAllUsersFromDB = async () => {
     const result = await pool.query(`
-         SELECT * FROM users
-      `);
+  SELECT id, name, email, age, role, is_active, created_at
+  FROM users
+`);
     return result;
 };
 const getSingleUserFromDB = async (id) => {
     const result = await pool.query(`
-        SELECT * FROM users
-        WHERE id = $1
-        `, [id]);
+  SELECT id, name, email, age, role, is_active, created_at
+  FROM users
+  WHERE id = $1
+  `, [id]);
     return result;
 };
 const updateUserFromDB = async (payLoad, id) => {
@@ -37,7 +41,7 @@ const updateUserFromDB = async (payLoad, id) => {
       is_active = COALESCE($4, is_active), 
       updated_at = NOW()
     WHERE id = $5 
-    RETURNING *
+   RETURNING id, name, email, age, role, is_active, updated_at
     `, [name, age, hashedPassword, is_active, id]);
     return result;
 };
@@ -45,7 +49,7 @@ const deleteUserFromDB = async (id) => {
     const result = await pool.query(`
       DELETE FROM users
       WHERE id = $1 
-      RETURNING *
+      RETURNING id, name, email, age, role
       `, [id]);
     return result;
     // console.log(result);

@@ -1,5 +1,6 @@
 import { pool } from "../../db";
 import { userService } from "./user.service";
+import sendResponse from "../../utility/sendResponse";
 const createUser = async (req, res) => {
     // const { name, email, age, password } = req.body;
     try {
@@ -26,6 +27,7 @@ const createUser = async (req, res) => {
     }
 };
 const getAllUsers = async (req, res) => {
+    console.log("Controller", req.user);
     try {
         const result = await userService.getAllUsersFromDB();
         res.status(200).json({
@@ -56,15 +58,17 @@ const getSingleUser = async (req, res) => {
                 data: {},
             });
         }
-        res.status(200).json({
+        // console.log(result);
+        sendResponse(res, {
+            statusCode: 201,
             success: true,
             message: "User retrieved successfully",
             data: result.rows[0],
         });
-        // console.log(result);
     }
     catch (error) {
-        res.status(500).json({
+        sendResponse(res, {
+            statusCode: 500,
             success: false,
             message: error.message,
             error: error,
